@@ -21,7 +21,7 @@ void setup () {
     Wire.begin();
     pinMode(rele, OUTPUT);
     pinMode(pulsador,INPUT_PULLUP);
-    digitalWrite(rele, HIGH);
+    digitalWrite(rele, LOW);
 
     imprimir_fecha();
 }
@@ -68,11 +68,10 @@ void alimentar () {
     Serial.println("Alimentando");
     imprimir_fecha();
     for (int i =0 ; i <5 ;i++){
-        digitalWrite(rele, LOW);
-        delay(200);
         digitalWrite(rele, HIGH);
+        delay(200);
+        digitalWrite(rele, LOW);
         delay(200);
       }
   
 }
-
