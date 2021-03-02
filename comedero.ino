@@ -67,7 +67,7 @@ void alimentar () {
 
     Serial.println("Alimentando");
     imprimir_fecha();
-    for (int i =0 ; i <5 ;i++){
+    for (int i =0 ; i <4 ;i++){
         digitalWrite(rele, HIGH);
         delay(200);
         digitalWrite(rele, LOW);
