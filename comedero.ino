@@ -30,8 +30,8 @@ void loop () {
   
     DateTime now = myRTC.now();
     
-    if ((now.hour() == 13 && now.minute() == 10 && now.second() == 0) ||
-        (now.hour() == 21 && now.minute() == 10 && now.second() == 0)){
+    if ((now.hour() == 13 && now.minute() == 00 && now.second() == 0) ||
+        (now.hour() == 21 && now.minute() == 00 && now.second() == 0)){
         alimentar();      
         delay(1000);
     }
