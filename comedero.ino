@@ -17,7 +17,7 @@ void setup () {
     DateTime now = myRTC.now();
     
     Serial.begin(57600);
-    Serial.println("iniciando ..."); 
+    Serial.println("Iniciando TerryDero BY Leandrouno..."); 
     Wire.begin();
     pinMode(rele, OUTPUT);
     pinMode(pulsador,INPUT_PULLUP);
