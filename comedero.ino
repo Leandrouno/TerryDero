@@ -46,6 +46,7 @@ void loop () {
 
 void imprimir_fecha(){
 
+    Serial.print("Fecha y hora del dispositivo ");
     DateTime now = myRTC.now();
     Serial.print(now.day(), DEC);
     Serial.print('/');
