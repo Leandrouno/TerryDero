@@ -1,0 +1,245 @@
+////////////////////////////////////////
+//                                    //
+// COMEDERO AUTOMATICO BY LEANDROUNO  //
+//      01/11/2021 Version 2.0        //  
+//                                    //
+////////////////////////////////////////
+
+#include <ESP8266WiFi.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
+
+
+#define PULSADOR D4
+#define LED D2
+#define RELE D6
+/*
+const char *ssid     = "Medicago";
+const char *password = "BastaMartina2021";*/
+
+const char *ssid     = "";
+const char *password = "";
+String alimentacion = "";
+int modoAutomatico = true;
+
+
+
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org");
+WiFiServer server(80);
+
+ String dias[7]={"Domingo", "Lunes", "Martes", "Miercoles", "Jueves", "Viernes", "Sabado"};
+ String meses[12]={"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"};
+
+
+void setup() {
+
+
+  Serial.begin(9600);
+  Serial.println("Iniciando TerryDero BY Leandrouno..."); 
+
+  pinMode(RELE, OUTPUT);
+  pinMode(LED, OUTPUT);
+  pinMode(PULSADOR,INPUT_PULLUP);
+  digitalWrite(RELE, LOW);
+ 
+  Serial.print("Conectando a ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  digitalWrite(LED, HIGH);
+
+  timeClient.begin();
+  timeClient.setTimeOffset(-10800);
+  timeClient.update();
+
+  Serial.println (" ");
+  Serial.print ("Iniciado  :");
+  imprimirHora();
+
+  server.begin();
+
+  Serial.print("http://");
+  Serial.println(WiFi.localIP());
+
+  attachInterrupt(digitalPinToInterrupt(D4), alimentar, FALLING);
+  
+}
+
+void loop() {
+
+  if (WiFi.status() == WL_CONNECTED) { digitalWrite(LED, HIGH); } else {digitalWrite(LED, LOW);}
+      timeClient.update();     
+      verificarHora();
+
+
+      if(Serial.available() > 0){
+        char dato = Serial.read();
+        if (dato == 'A'){alimentar();}
+      }
+
+ WiFiClient client = server.available();
+
+  if (!client)  {
+    return;
+  }
+
+  while(!client.available()) {
+    delay(1);
+  }
+
+  String request = client.readStringUntil('\r');
+
+  Serial.println(request);
+
+  client.flush();
+
+   if(request.indexOf("/ALIMENTAR=ON") != -1) {
+
+    alimentar();
+    client.println("<script type='text/javascript'>window.location.href = '../'</script>");
+
+  }
+
+   if(request.indexOf("/AUTOMATICO=OFF") != -1) {
+
+    modoAutomatico = false;
+    client.println("<script type='text/javascript'>window.location.href = '../'</script>");
+
+  }
+
+     if(request.indexOf("/AUTOMATICO=ON") != -1) {
+
+    modoAutomatico = true;
+    client.println("<script type='text/javascript'>window.location.href = '../'</script>");
+
+  }
+ 
+
+//*------------------HTML---------------------*//
+
+ 
+
+  client.println("HTTP/1.1 200 OK");
+
+  client.println("Content-Type: text/html");
+
+  client.println("");
+
+  client.println("<!DOCTYPE HTML>");
+
+  client.println("<html>");
+  client.println("<link href='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css' rel='stylesheet' integrity='sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC' crossorigin='anonymous'>");
+  client.println("<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js' integrity='sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM' crossorigin='anonymous'></script>");
+
+
+  client.println("<div class='d-flex justify-content-center'><div class='container'><h1 class='display-4'>Disparador</h1>");
+  client.println("<div class='container'><p class='h-4 text-info'>Automatico : ");
+  client.println(modoAutomatico);
+  client.println("</p></div>");
+  client.println(alimentacion);
+  client.println("</div></div>");
+  client.println("<br><br>")  ;
+
+  client.println("<div class='justify-content-center'><div class='col text-center'>");
+  client.println("<a href=\"/ALIMENTAR=ON\"\"><button class='btn btn-info'>Alimentar </button></a>");
+  client.println("<a href=\"/AUTOMATICO=ON\"\"><button class='btn btn-success'>Automatico ON</button></a>");
+  client.println("<a href=\"/AUTOMATICO=OFF\"\"><button class='btn btn-danger'>Automatico OFF</button></a>");
+  client.println("</div></div>");
+
+  client.println("</html>");
+
+//*------------------HTML---------------------*//
+
+  delay(1);
+
+  Serial.println("Cliente desconectado");
+
+  Serial.println("");    
+
+
+}
+
+
+void alimentar () {
+
+    Serial.println("*** Alimentando ***");
+
+    for (int i =0 ; i <4 ;i++){
+        Serial.println("alimento");
+        digitalWrite(RELE, HIGH);
+        delay(200);
+        digitalWrite(RELE, LOW);
+        delay(200);
+      }
+      Serial.println(" ");
+
+    imprimirHora(); 
+}
+
+void verificarHora(){
+
+    unsigned long epochTime = timeClient.getEpochTime();
+    int horaActual = timeClient.getHours();
+    int minutosActual = timeClient.getMinutes();   
+    int segundosActual = timeClient.getSeconds();
+    String diaSemana = dias[timeClient.getDay()];
+    struct tm *ptm = gmtime ((time_t *)&epochTime);  
+    int diaMes = ptm->tm_mday; 
+    int mesCorriente = ptm->tm_mon+1;
+    String mesCorrienteNombre = meses[mesCorriente-1];  
+    String fecha = String(diaSemana) + " " + String(diaMes) + " de " + String(mesCorrienteNombre) + " a las " + String(horaActual) + ":" + String(minutosActual) + ":" + String(segundosActual);
+ 
+    if ((horaActual == 15 && minutosActual == 57 && segundosActual == 0) ||
+        (horaActual ==15 && minutosActual == 58 && segundosActual == 0)){
+
+      if(modoAutomatico == true){ alimentar(); } else {
+
+    Serial.println(" ");
+    Serial.println(" ** Paso por hora Desactivado ** ");
+    Serial.println(" ");
+    alimentacion +="<p class='h5 text-danger'>Desactivado - >";
+    alimentacion += fecha;
+    alimentacion +="</p>";
+    alimentacion +="<br>";
+        }
+      
+       delay(1000);
+    }
+
+  
+
+}
+
+void imprimirHora(){
+
+  unsigned long epochTime = timeClient.getEpochTime();
+  int horaActual = timeClient.getHours();
+  int minutosActual = timeClient.getMinutes();   
+  int segundosActual = timeClient.getSeconds();
+  String diaSemana = dias[timeClient.getDay()];
+  struct tm *ptm = gmtime ((time_t *)&epochTime);  
+  int diaMes = ptm->tm_mday; 
+  int mesCorriente = ptm->tm_mon+1;
+  String mesCorrienteNombre = meses[mesCorriente-1];
+  
+  String fecha = String(diaSemana) + " " + String(diaMes) + " de " + String(mesCorrienteNombre) + " a las " + String(horaActual) + ":" + String(minutosActual) + ":" + String(segundosActual);
+    
+    Serial.println(" ");
+    Serial.print("Hora ");
+    Serial.print(horaActual);
+    Serial.print(" : ");
+    Serial.print(minutosActual);
+    Serial.print(" : ");
+    Serial.print(segundosActual);
+    Serial.println(" ");
+    alimentacion +="<p class='h5 text-success'>";
+    alimentacion += fecha;
+    alimentacion +="</p>";
+    alimentacion +="<br>";
+  }
