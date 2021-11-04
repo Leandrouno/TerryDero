@@ -14,8 +14,8 @@
 #define LED D2
 #define RELE D6
 
-const char *ssid     = "";
-const char *password = "";
+const char *ssid     = "Coronavirus";
+const char *password = "BastaMartina2020";
 String alimentacion = "";
 int modoAutomatico = true;
 
@@ -48,8 +48,6 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
-
-  digitalWrite(LED, HIGH);
 
   timeClient.begin();
   timeClient.setTimeOffset(-10800);
@@ -170,9 +168,9 @@ void alimentar () {
     for (int i =0 ; i <4 ;i++){
         Serial.println("alimento");
         digitalWrite(RELE, HIGH);
-        delay(200);
+        delay(250);
         digitalWrite(RELE, LOW);
-        delay(200);
+        delay(350);
       }
       Serial.println(" ");
 
@@ -192,8 +190,8 @@ void verificarHora(){
     String mesCorrienteNombre = meses[mesCorriente-1];  
     String fecha = String(diaSemana) + " " + String(diaMes) + " de " + String(mesCorrienteNombre) + " a las " + String(horaActual) + ":" + String(minutosActual) + ":" + String(segundosActual);
  
-    if ((horaActual == 15 && minutosActual == 57 && segundosActual == 0) ||
-        (horaActual ==15 && minutosActual == 58 && segundosActual == 0)){
+    if ((horaActual == 12 && minutosActual == 55 && segundosActual == 0) ||
+        (horaActual == 20 && minutosActual == 30 && segundosActual == 0)){
 
       if(modoAutomatico == true){ alimentar(); } else {
 
