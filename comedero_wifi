@@ -13,9 +13,6 @@
 #define PULSADOR D4
 #define LED D2
 #define RELE D6
-/*
-const char *ssid     = "Medicago";
-const char *password = "BastaMartina2021";*/
 
 const char *ssid     = "";
 const char *password = "";
