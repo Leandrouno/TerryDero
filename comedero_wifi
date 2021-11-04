@@ -168,7 +168,7 @@ void alimentar () {
     for (int i =0 ; i <4 ;i++){
         Serial.println("alimento");
         digitalWrite(RELE, HIGH);
-        delay(250);
+        delay(200);
         digitalWrite(RELE, LOW);
         delay(350);
       }
