@@ -14,8 +14,8 @@
 #define LED D2
 #define RELE D6
 
-const char *ssid     = "Coronavirus";
-const char *password = "BastaMartina2020";
+const char *ssid     = "";
+const char *password = "";
 String alimentacion = "";
 int modoAutomatico = true;
 
