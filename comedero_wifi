@@ -2,6 +2,7 @@
 //                                    //
 // COMEDERO AUTOMATICO BY LEANDROUNO  //
 //      01/11/2021 Version 2.0        //  
+//      15/02/2022 Version 2.1        //  
 //                                    //
 ////////////////////////////////////////
 
@@ -16,9 +17,11 @@
 
 const char *ssid     = "";
 const char *password = "";
-String alimentacion = "";
-int modoAutomatico = true;
 
+String estadoAlimentacion = "";
+int modoAutomatico = true;
+int modoAlimentar = true;
+unsigned long tiempoAhora = 0;
 
 
 WiFiUDP ntpUDP;
@@ -32,7 +35,7 @@ WiFiServer server(80);
 void setup() {
 
 
-  Serial.begin(9600);
+  Serial.begin(115200);
   Serial.println("Iniciando TerryDero BY Leandrouno..."); 
 
   pinMode(RELE, OUTPUT);
@@ -54,15 +57,15 @@ void setup() {
   timeClient.update();
 
   Serial.println (" ");
-  Serial.print ("Iniciado  :");
-  imprimirHora();
+  Serial.print ("Iniciado  : ");
+  Serial.println(retornoFecha(8));
 
   server.begin();
 
   Serial.print("http://");
   Serial.println(WiFi.localIP());
 
-  attachInterrupt(digitalPinToInterrupt(D4), alimentar, FALLING);
+  attachInterrupt(digitalPinToInterrupt(D4), presionoPulsador, FALLING);
   
 }
 
@@ -71,7 +74,6 @@ void loop() {
   if (WiFi.status() == WL_CONNECTED) { digitalWrite(LED, HIGH); } else {digitalWrite(LED, LOW);}
       timeClient.update();     
       verificarHora();
-
 
       if(Serial.available() > 0){
         char dato = Serial.read();
@@ -96,9 +98,9 @@ void loop() {
 
    if(request.indexOf("/ALIMENTAR=ON") != -1) {
 
-    alimentar();
     client.println("<script type='text/javascript'>window.location.href = '../'</script>");
-
+    alimentar();
+    return;
   }
 
    if(request.indexOf("/AUTOMATICO=OFF") != -1) {
@@ -108,16 +110,26 @@ void loop() {
 
   }
 
-     if(request.indexOf("/AUTOMATICO=ON") != -1) {
+   if(request.indexOf("/AUTOMATICO=ON") != -1) {
 
     modoAutomatico = true;
     client.println("<script type='text/javascript'>window.location.href = '../'</script>");
 
   }
- 
 
-//*------------------HTML---------------------*//
+   if(request.indexOf("/MODOALIMENTAR=OFF") != -1) {
 
+    modoAlimentar = false;
+    client.println("<script type='text/javascript'>window.location.href = '../'</script>");
+
+  }
+
+   if(request.indexOf("/MODOALIMENTAR=ON") != -1) {
+
+    modoAlimentar = true;
+    client.println("<script type='text/javascript'>window.location.href = '../'</script>");
+
+  }
  
 
   client.println("HTTP/1.1 200 OK");
@@ -132,24 +144,25 @@ void loop() {
   client.println("<link href='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css' rel='stylesheet' integrity='sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC' crossorigin='anonymous'>");
   client.println("<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js' integrity='sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM' crossorigin='anonymous'></script>");
 
-
-  client.println("<div class='d-flex justify-content-center'><div class='container'><h1 class='display-4'>Disparador</h1>");
-  client.println("<div class='container'><p class='h-4 text-info'>Automatico : ");
+  client.println("<div class='d-flex justify-content-center'><div class='container'><h1 class='display-4'>Disparador</h1></div>");
+  client.println("<div class='d-flex justify-content-center'><h5><span class='badge bg-secondary'>Automatico : ");
   client.println(modoAutomatico);
-  client.println("</p></div>");
-  client.println(alimentacion);
-  client.println("</div></div>");
+  client.println("</span></h5><h5><span class='badge bg-primary'>Estado Alimentador : ");
+  client.println(modoAlimentar);
+  client.println("</span></h5></div></div><div class='container text-center'>");
+  client.println(estadoAlimentacion);
+  client.println("</div>");
   client.println("<br><br>")  ;
 
   client.println("<div class='justify-content-center'><div class='col text-center'>");
   client.println("<a href=\"/ALIMENTAR=ON\"\"><button class='btn btn-info'>Alimentar </button></a>");
-  client.println("<a href=\"/AUTOMATICO=ON\"\"><button class='btn btn-success'>Automatico ON</button></a>");
-  client.println("<a href=\"/AUTOMATICO=OFF\"\"><button class='btn btn-danger'>Automatico OFF</button></a>");
+  client.println("<a href=\"/AUTOMATICO=ON\"\"><button class='btn btn-primary'>Automatico ON</button></a>");
+  client.println("<a href=\"/AUTOMATICO=OFF\"\"><button class='btn btn-warning'>Automatico OFF</button></a>");
+  client.println("<a href=\"/MODOALIMENTAR=ON\"\"><button class='btn btn-success'>Encendido</button></a>");
+  client.println("<a href=\"/MODOALIMENTAR=OFF\"\"><button class='btn btn-danger'>Apagado</button></a>");
   client.println("</div></div>");
 
   client.println("</html>");
-
-//*------------------HTML---------------------*//
 
   delay(1);
 
@@ -162,56 +175,85 @@ void loop() {
 
 
 void alimentar () {
+    
+    if (modoAlimentar == true){
+    
+    Serial.println("--- Alimentando ---");
 
-    Serial.println("*** Alimentando ***");
+    for (int i =0 ; i <5 ;i++){
+      
+       Serial.println("disparo");      
 
-    for (int i =0 ; i <4 ;i++){
-        Serial.println("alimento");
-        digitalWrite(RELE, HIGH);
-        delay(200);
-        digitalWrite(RELE, LOW);
-        delay(350);
+       digitalWrite(RELE, HIGH);
+       delay(200);
+       digitalWrite(RELE, LOW);
+       delay(300);
+
       }
-      Serial.println(" ");
 
-    imprimirHora(); 
+      Serial.println("--- FIN ---");
+
+    Serial.println(retornoFecha(8));
+    estadoAlimentacion +="<p class='h6 text-success'>";
+    estadoAlimentacion += retornoFecha(8);
+    estadoAlimentacion +="</p><br>";
+
+    } else {
+
+        Serial.println("--- Alimentandor APAGADO ---");
+        Serial.println(retornoFecha(8));
+        estadoAlimentacion +="<p class='h6 text-danger'> Alimentador -APAGADO-";
+        estadoAlimentacion += retornoFecha(8);
+        estadoAlimentacion +="</p><br>";
+
+    }
+
 }
 
 void verificarHora(){
+    
+    String horaActual = retornoFecha(1);
+    String minutosActual = retornoFecha(2);   
+    String segundosActual = retornoFecha(3);
+    
+    if (
+        (horaActual.toInt() == 12 && minutosActual.toInt() == 55 && segundosActual.toInt() == 0) ||
+        (horaActual.toInt() == 20 && minutosActual.toInt() == 30 && segundosActual.toInt() == 0)){
 
-    unsigned long epochTime = timeClient.getEpochTime();
-    int horaActual = timeClient.getHours();
-    int minutosActual = timeClient.getMinutes();   
-    int segundosActual = timeClient.getSeconds();
-    String diaSemana = dias[timeClient.getDay()];
-    struct tm *ptm = gmtime ((time_t *)&epochTime);  
-    int diaMes = ptm->tm_mday; 
-    int mesCorriente = ptm->tm_mon+1;
-    String mesCorrienteNombre = meses[mesCorriente-1];  
-    String fecha = String(diaSemana) + " " + String(diaMes) + " de " + String(mesCorrienteNombre) + " a las " + String(horaActual) + ":" + String(minutosActual) + ":" + String(segundosActual);
- 
-    if ((horaActual == 12 && minutosActual == 55 && segundosActual == 0) ||
-        (horaActual == 20 && minutosActual == 30 && segundosActual == 0)){
+      if(modoAutomatico == true){ 
+        alimentar(); 
+        Serial.println(" -- Modo Automatico -- ");
+        return;
+        } else {
 
-      if(modoAutomatico == true){ alimentar(); } else {
+        Serial.println(" ");
+        Serial.println(" -- Paso por hora Desactivado -- ");
+        Serial.println(" ");
+        estadoAlimentacion +="<p class='h6 text-danger'>Desactivado - >";
+        estadoAlimentacion += retornoFecha(8);
+        estadoAlimentacion +="</p><br>";
 
-    Serial.println(" ");
-    Serial.println(" ** Paso por hora Desactivado ** ");
-    Serial.println(" ");
-    alimentacion +="<p class='h5 text-danger'>Desactivado - >";
-    alimentacion += fecha;
-    alimentacion +="</p>";
-    alimentacion +="<br>";
         }
-      
-       delay(1000);
-    }
 
-  
+     tiempoAhora = millis();
+     while(millis() < tiempoAhora+1000){Serial.print(".");}
+
+    Serial.println(".");
+    }
 
 }
 
-void imprimirHora(){
+  void presionoPulsador(){
+   
+    Serial.print("Se presiono pulsador : ");
+    Serial.println(retornoFecha(8));
+    tiempoAhora = millis();
+    while(millis() < tiempoAhora+200){}
+    alimentar();
+    return;
+  }
+
+  String retornoFecha( int i){
 
   unsigned long epochTime = timeClient.getEpochTime();
   int horaActual = timeClient.getHours();
@@ -224,17 +266,19 @@ void imprimirHora(){
   String mesCorrienteNombre = meses[mesCorriente-1];
   
   String fecha = String(diaSemana) + " " + String(diaMes) + " de " + String(mesCorrienteNombre) + " a las " + String(horaActual) + ":" + String(minutosActual) + ":" + String(segundosActual);
-    
-    Serial.println(" ");
-    Serial.print("Hora ");
-    Serial.print(horaActual);
-    Serial.print(" : ");
-    Serial.print(minutosActual);
-    Serial.print(" : ");
-    Serial.print(segundosActual);
-    Serial.println(" ");
-    alimentacion +="<p class='h5 text-success'>";
-    alimentacion += fecha;
-    alimentacion +="</p>";
-    alimentacion +="<br>";
+
+  String array[10];
+  array[0] = epochTime;
+  array[1] = horaActual;
+  array[2] = minutosActual;
+  array[3] = segundosActual;
+  array[4] = diaSemana;
+  array[5] = diaMes;
+  array[6] = mesCorriente;
+  array[7] = mesCorrienteNombre;
+  array[8] = fecha;
+
+  return array[i];
+  
   }
+
