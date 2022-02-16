@@ -78,6 +78,8 @@ void loop() {
       if(Serial.available() > 0){
         char dato = Serial.read();
         if (dato == 'A'){alimentar();}
+        if (dato == 'F'){modoAlimentar = false; Serial.println(" -- Alimentador Apagado -- ");}
+        if (dato == 'N'){modoAlimentar = true; Serial.println(" -- Alimentador Encendido -- ");}
       }
 
  WiFiClient client = server.available();
@@ -101,6 +103,7 @@ void loop() {
     client.println("<script type='text/javascript'>window.location.href = '../'</script>");
     alimentar();
     return;
+
   }
 
    if(request.indexOf("/AUTOMATICO=OFF") != -1) {
@@ -141,6 +144,7 @@ void loop() {
   client.println("<!DOCTYPE HTML>");
 
   client.println("<html>");
+  client.println("<title>TerryDero</title>");
   client.println("<link href='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css' rel='stylesheet' integrity='sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC' crossorigin='anonymous'>");
   client.println("<script src='https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js' integrity='sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM' crossorigin='anonymous'></script>");
 
@@ -168,8 +172,7 @@ void loop() {
 
   Serial.println("Cliente desconectado");
 
-  Serial.println("");    
-
+  Serial.println("");
 
 }
 
@@ -182,8 +185,8 @@ void alimentar () {
 
     for (int i =0 ; i <5 ;i++){
       
-       Serial.println("disparo");      
-
+       Serial.println("disparo");
+       
        digitalWrite(RELE, HIGH);
        delay(200);
        digitalWrite(RELE, LOW);
@@ -191,7 +194,7 @@ void alimentar () {
 
       }
 
-      Serial.println("--- FIN ---");
+    Serial.println("--- FIN ---");
 
     Serial.println(retornoFecha(8));
     estadoAlimentacion +="<p class='h6 text-success'>";
@@ -235,10 +238,9 @@ void verificarHora(){
 
         }
 
-     tiempoAhora = millis();
-     while(millis() < tiempoAhora+1000){Serial.print(".");}
-
+    delay(1000);
     Serial.println(".");
+
     }
 
 }
